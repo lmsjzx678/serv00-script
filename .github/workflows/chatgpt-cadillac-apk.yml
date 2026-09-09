@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - chatgpt-cadillac-apk-build
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
