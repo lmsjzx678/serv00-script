@@ -1,0 +1,39 @@
+name: ChatGPT Cadillac APK Build
+
+on:
+  push:
+    branches:
+      - chatgpt-cadillac-apk-build
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Gradle 8.9
+        run: |
+          curl -L --retry 3 -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+      - name: Build debug APK
+        working-directory: cadillac_apk
+        run: /tmp/gradle-8.9/bin/gradle --no-daemon clean assembleDebug --stacktrace
+      - name: Verify APK
+        run: |
+          ls -lh cadillac_apk/app/build/outputs/apk/debug/app-debug.apk
+          $ANDROID_HOME/build-tools/35.0.0/aapt dump badging cadillac_apk/app/build/outputs/apk/debug/app-debug.apk | head -20
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cadillac-Car-Screenshot-debug-apk
+          path: cadillac_apk/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
